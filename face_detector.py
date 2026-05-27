@@ -17,9 +17,14 @@
 import mediapipe as mp
 import numpy as np
 
-mp_drawing = mp.solutions.drawing_utils
-mp_drawing_styles = mp.solutions.drawing_styles
-mp_face_mesh = mp.solutions.face_mesh
+try:
+    _solutions = mp.solutions
+except AttributeError:
+    from mediapipe.python import solutions as _solutions
+
+mp_drawing = _solutions.drawing_utils
+mp_drawing_styles = _solutions.drawing_styles
+mp_face_mesh = _solutions.face_mesh
 
 
 class FaceDetector:

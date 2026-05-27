@@ -36,6 +36,20 @@ I = matrix_to_rotation_6d(torch.eye(3)[None].cuda())
 if not hasattr(inspect, 'getargspec'):
     inspect.getargspec = inspect.getfullargspec
 
+# chumpy also imports deprecated NumPy aliases removed in NumPy>=1.24.
+_NUMPY_ALIAS_MAP = {
+    'bool': bool,
+    'int': int,
+    'float': float,
+    'complex': complex,
+    'object': object,
+    'str': str,
+    'unicode': str,
+}
+for _alias_name, _alias_value in _NUMPY_ALIAS_MAP.items():
+    if not hasattr(np, _alias_name):
+        setattr(np, _alias_name, _alias_value)
+
 
 def to_tensor(array, dtype=torch.float32):
     if 'torch.tensor' not in str(type(array)):

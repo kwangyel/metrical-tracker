@@ -50,8 +50,6 @@ os.environ["OPENCV_IO_ENABLE_OPENEXR"] = "1"
 rank = 42
 torch.manual_seed(rank)
 torch.cuda.manual_seed(rank)
-cudnn.deterministic = True
-cudnn.benchmark = False
 np.random.seed(rank)
 I = torch.eye(3)[None].cuda().detach()
 I6D = matrix_to_rotation_6d(I)
@@ -76,6 +74,7 @@ class Tracker(object):
     def __init__(self, config, device='cuda:0'):
         self.config = config
         self.device = device
+        self.configure_runtime_backends()
         self.face_detector = FaceDetector('google')
         self.pyr_levels = config.pyr_levels
         self.cameras = PerspectiveCameras()
@@ -100,6 +99,12 @@ class Tracker(object):
         self.create_output_folders()
         self.writer = SummaryWriter(log_dir=self.save_folder + self.actor_name + '/logs')
         self.setup_renderer()
+
+    def configure_runtime_backends(self):
+        cudnn.deterministic = self.config.perf_cudnn_deterministic
+        cudnn.benchmark = self.config.perf_cudnn_benchmark
+        torch.backends.cuda.matmul.allow_tf32 = self.config.perf_allow_tf32
+        torch.backends.cudnn.allow_tf32 = self.config.perf_allow_tf32
 
     def get_image_size(self):
         return self.image_size[0][0].item(), self.image_size[0][1].item()
@@ -530,8 +535,9 @@ class Tracker(object):
                 all_loss.backward()
                 optimizer.step()
 
-                for key in losses.keys():
-                    self.writer.add_scalar(key, losses[key], global_step=self.global_step)
+                if self.config.perf_log_tensorboard and self.global_step % max(1, int(self.config.perf_log_every_n_steps)) == 0:
+                    for key in losses.keys():
+                        self.writer.add_scalar(key, losses[key], global_step=self.global_step)
 
                 self.global_step += 1
 
@@ -551,6 +557,9 @@ class Tracker(object):
         images, landmarks, landmarks_dense, _, _ = self.parse_batch(batch)
 
         input_image = util.to_image(batch['image'].clone()[0].cpu().numpy())
+        frame_id = str(self.frame).zfill(5)
+        frame_idx = self.frame
+        should_save_visuals = self.config.perf_save_visualizations and frame_idx % max(1, int(self.config.perf_save_visualizations_every_n_frames)) == 0
 
         savefolder = self.save_folder + self.actor_name + frame_dst
         Path(savefolder).mkdir(parents=True, exist_ok=True)
@@ -616,22 +625,23 @@ class Tracker(object):
                 final_views.append(row)
 
             # VIDEO
-            final_views = util.merge_views(final_views)
-            frame_id = str(self.frame).zfill(5)
-
-            cv2.imwrite('{}/{}.jpg'.format(savefolder, frame_id), final_views)
-            cv2.imwrite('{}/{}.png'.format(self.input_folder, frame_id), input_image)
+            if should_save_visuals:
+                final_views = util.merge_views(final_views)
+                cv2.imwrite('{}/{}.jpg'.format(savefolder, frame_id), final_views)
+                cv2.imwrite('{}/{}.png'.format(self.input_folder, frame_id), input_image)
 
             if not save:
                 return
 
             # CHECKPOINT
-            self.save_checkpoint(frame_id)
+            if frame_idx % max(1, int(self.config.perf_checkpoint_every_n_frames)) == 0:
+                self.save_checkpoint(frame_id)
 
             # DEPTH
-            depth_view = self.diff_renderer.render_depth(vertices, cameras=self.cameras, faces=torch.cat([util.get_flame_extra_faces(), self.diff_renderer.faces], dim=1))
-            depth = depth_view[0].permute(1, 2, 0)[..., 2:].cpu().numpy() * 1000.0
-            cv2.imwrite('{}/{}.png'.format(self.depth_folder, frame_id), depth.astype(np.uint16))
+            if frame_idx % max(1, int(self.config.perf_save_depth_every_n_frames)) == 0:
+                depth_view = self.diff_renderer.render_depth(vertices, cameras=self.cameras, faces=torch.cat([util.get_flame_extra_faces(), self.diff_renderer.faces], dim=1))
+                depth = depth_view[0].permute(1, 2, 0)[..., 2:].cpu().numpy() * 1000.0
+                cv2.imwrite('{}/{}.png'.format(self.depth_folder, frame_id), depth.astype(np.uint16))
 
     def optimize_frame(self, batch):
         batch = self.to_cuda(batch)
@@ -678,7 +688,17 @@ class Tracker(object):
         self.data_generator = GeneratorDataset(self.config.actor, self.config)
         self.data_generator.run()
         self.dataset = ImagesDataset(self.config)
-        self.dataloader = DataLoader(self.dataset, batch_size=1, num_workers=0, shuffle=False, pin_memory=True, drop_last=False)
+        workers = max(0, int(self.config.perf_dataloader_num_workers))
+        use_persistent_workers = self.config.perf_dataloader_persistent_workers and workers > 0
+        self.dataloader = DataLoader(
+            self.dataset,
+            batch_size=1,
+            num_workers=workers,
+            shuffle=False,
+            pin_memory=True,
+            drop_last=False,
+            persistent_workers=use_persistent_workers
+        )
 
     def initialize_tracking(self):
         self.is_initializing = True

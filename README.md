@@ -58,6 +58,31 @@ you can specify the input and output folders.
 python tracker.py --cfg ./configs/actors/duda.yml
 ```
 
+#### Optional runtime performance flags (non-breaking)
+
+The tracker now supports opt-in runtime performance flags that keep quality settings untouched by default.
+All flags default to current behavior.
+
+```yaml
+# Example additions in your actor config:
+perf_log_tensorboard: false
+perf_log_every_n_steps: 20
+perf_save_visualizations: true
+perf_save_visualizations_every_n_frames: 5
+perf_save_depth_every_n_frames: 5
+perf_checkpoint_every_n_frames: 1
+perf_dataloader_num_workers: 4
+perf_dataloader_persistent_workers: true
+perf_cudnn_benchmark: true
+perf_cudnn_deterministic: false
+perf_allow_tf32: true
+```
+
+RunPod-only validation recommendation:
+- Compare baseline and optimized runs on the same short clip.
+- Check wall-clock time and inspect `train.log` loss trends.
+- Keep `perf_checkpoint_every_n_frames: 1` if you rely on fine-grained resume.
+
 #### Tips
 
 - in the case of fast-changing sequences you might adjust the learning rate for **R** and **T** in the config.

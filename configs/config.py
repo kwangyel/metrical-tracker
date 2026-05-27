@@ -48,6 +48,19 @@ cfg.optimize_jaw = False
 cfg.crop_image = True
 cfg.save_folder = './output/'
 
+# Optional runtime performance flags (all defaults preserve current behavior)
+cfg.perf_log_tensorboard = True
+cfg.perf_log_every_n_steps = 1
+cfg.perf_save_visualizations = True
+cfg.perf_save_visualizations_every_n_frames = 1
+cfg.perf_save_depth_every_n_frames = 1
+cfg.perf_checkpoint_every_n_frames = 1
+cfg.perf_dataloader_num_workers = 0
+cfg.perf_dataloader_persistent_workers = False
+cfg.perf_cudnn_benchmark = False
+cfg.perf_cudnn_deterministic = True
+cfg.perf_allow_tf32 = False
+
 # Weights
 cfg.w_pho = 350
 cfg.w_lmks = 7000

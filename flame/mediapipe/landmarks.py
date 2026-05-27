@@ -15,18 +15,29 @@
 # Contact: mica@tue.mpg.de
 
 import numpy as np
-from mediapipe.python.solutions.face_mesh_connections import FACEMESH_FACE_OVAL
-# from mediapipe.python.solutions.face_mesh_connections import FACEMESH_IRISES
-from mediapipe.python.solutions.face_mesh_connections import FACEMESH_LEFT_EYE
-from mediapipe.python.solutions.face_mesh_connections import FACEMESH_LEFT_EYEBROW
-from mediapipe.python.solutions.face_mesh_connections import FACEMESH_LEFT_IRIS
-from mediapipe.python.solutions.face_mesh_connections import FACEMESH_LIPS
-from mediapipe.python.solutions.face_mesh_connections import FACEMESH_RIGHT_EYE
-from mediapipe.python.solutions.face_mesh_connections import FACEMESH_RIGHT_EYEBROW
-from mediapipe.python.solutions.face_mesh_connections import FACEMESH_RIGHT_IRIS
 
+# mediapipe>=0.10: use public solutions API (mediapipe.python was removed from wheels)
+try:
+    import mediapipe as mp
 
-# from mediapipe.python.solutions.face_mesh_connections import FACEMESH_TESSELATION
+    _face_mesh = mp.solutions.face_mesh
+    FACEMESH_FACE_OVAL = _face_mesh.FACEMESH_FACE_OVAL
+    FACEMESH_LEFT_EYE = _face_mesh.FACEMESH_LEFT_EYE
+    FACEMESH_LEFT_EYEBROW = _face_mesh.FACEMESH_LEFT_EYEBROW
+    FACEMESH_LEFT_IRIS = _face_mesh.FACEMESH_LEFT_IRIS
+    FACEMESH_LIPS = _face_mesh.FACEMESH_LIPS
+    FACEMESH_RIGHT_EYE = _face_mesh.FACEMESH_RIGHT_EYE
+    FACEMESH_RIGHT_EYEBROW = _face_mesh.FACEMESH_RIGHT_EYEBROW
+    FACEMESH_RIGHT_IRIS = _face_mesh.FACEMESH_RIGHT_IRIS
+except AttributeError:
+    from mediapipe.python.solutions.face_mesh_connections import FACEMESH_FACE_OVAL
+    from mediapipe.python.solutions.face_mesh_connections import FACEMESH_LEFT_EYE
+    from mediapipe.python.solutions.face_mesh_connections import FACEMESH_LEFT_EYEBROW
+    from mediapipe.python.solutions.face_mesh_connections import FACEMESH_LEFT_IRIS
+    from mediapipe.python.solutions.face_mesh_connections import FACEMESH_LIPS
+    from mediapipe.python.solutions.face_mesh_connections import FACEMESH_RIGHT_EYE
+    from mediapipe.python.solutions.face_mesh_connections import FACEMESH_RIGHT_EYEBROW
+    from mediapipe.python.solutions.face_mesh_connections import FACEMESH_RIGHT_IRIS
 
 def keypoints_to_array(keypoint_list):
     return np.unique(np.hstack(([np.array(kp_ids) for kp_ids in keypoint_list])))

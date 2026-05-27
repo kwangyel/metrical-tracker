@@ -40,7 +40,7 @@ Before installation, you need to create an account on the [FLAME website](https:
 login and password beforehand. You will be asked to provide them in the installation script.
 
 ```shell
-git clone https://github.com/Zielon/metrical-tracker.git
+git clone https://github.com/kwangyel/metrical-tracker.git
 cd metrical-tracker
 ./install.sh
 ```

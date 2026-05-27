@@ -1,9 +1,9 @@
-# App dependencies — excludes torch / torchvision / pytorch3d / numpy / opencv.
-# RunPod image already ships: numpy 2.x, opencv, torch 2.4, pytorch3d.
+# App dependencies — excludes torch / torchvision / pytorch3d.
+# This project uses MediaPipe legacy Solutions API; pin mediapipe<0.10.31.
 #
 #   pip install -r requirements.txt
 #
-# Do NOT pip-install mediapipe<0.10.30 — older builds downgrade numpy to 1.x.
+# NOTE: mediapipe==0.10.21 requires numpy<2.
 
 # Conda Python packages (pip equivalents)
 certifi>=2022.12.7
@@ -27,7 +27,9 @@ yacs>=0.1.8
 
 # Tracker runtime (direct imports)
 loguru>=0.6.0
-mediapipe>=0.10.30
+numpy<2
+mediapipe==0.10.21
+opencv-contrib-python==4.11.0.86
 face-alignment>=1.3.5
 scikit-image>=0.22.0
 scipy>=1.11.0
@@ -46,6 +48,6 @@ tifffile>=2023.3.15
 tensorboard>=2.12.0
 
 # Omitted (preinstalled on RunPod or breaks the image):
-#   numpy, opencv-python, opencv-contrib-python
+#   opencv-python
 #   torch, torchvision, pytorch3d
 #   llvmlite, numba, chumpy

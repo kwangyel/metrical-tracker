@@ -16,6 +16,7 @@
 
 import os
 import pickle
+import inspect
 
 import numpy as np
 # Modified from smplx code for FLAME
@@ -29,6 +30,11 @@ from loguru import logger
 from flame.lbs import lbs
 
 I = matrix_to_rotation_6d(torch.eye(3)[None].cuda())
+
+# chumpy (used in legacy FLAME pickle files) relies on inspect.getargspec,
+# which was removed in Python 3.11.
+if not hasattr(inspect, 'getargspec'):
+    inspect.getargspec = inspect.getfullargspec
 
 
 def to_tensor(array, dtype=torch.float32):
